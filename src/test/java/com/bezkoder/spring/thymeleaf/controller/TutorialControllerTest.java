@@ -73,7 +73,8 @@ class TutorialControllerTest {
     mockMvc.perform(get("/tutorials"))
         .andExpect(status().isOk())
         .andExpect(view().name("tutorials"))
-        .andExpect(model().attributeExists("message"));
+        .andExpect(model().attributeExists("message"))
+        .andExpect(model().attributeExists("tutorials"));
   }
 
   @Test

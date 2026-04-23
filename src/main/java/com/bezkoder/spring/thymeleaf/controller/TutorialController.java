@@ -35,6 +35,7 @@ public class TutorialController {
 
       model.addAttribute("tutorials", tutorials);
     } catch (Exception e) {
+      model.addAttribute("tutorials", new ArrayList<Tutorial>());
       model.addAttribute("message", e.getMessage());
     }
 
