@@ -81,3 +81,11 @@ Run both Back-end & Front-end in one place:
 mvn spring-boot:run
 ```
 
+
+## Automation quick start
+
+- Build: `./scripts/build.sh`
+- Test + coverage: `./scripts/test.sh`
+- Deploy staging (Docker): `./scripts/deploy.sh` or `docker compose up --build -d`
+- CI pipeline config: `.github/workflows/ci.yml`
+- Full report: `AUTOMATION_REPORT.md`
