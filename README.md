@@ -87,6 +87,7 @@ mvn spring-boot:run
 - Build: `./scripts/build.sh`
 - Test + coverage: `./scripts/test.sh`
 - Deploy staging (Docker): `./scripts/deploy.sh` or `docker compose up --build -d`
+  - By default `deploy.sh` runs tests (`clean verify`) before deploy. Use `RUN_TESTS=false ./scripts/deploy.sh` to skip.
 - CI pipeline config: `.github/workflows/ci.yml`
 - Full report: `AUTOMATION_REPORT.md`
 

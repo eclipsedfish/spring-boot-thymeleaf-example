@@ -8,8 +8,14 @@ IMAGE_NAME="${IMAGE_NAME:-spring-thymeleaf-app}"
 IMAGE_TAG="${IMAGE_TAG:-staging}"
 CONTAINER_NAME="${CONTAINER_NAME:-spring-thymeleaf-staging}"
 PORT="${PORT:-8080}"
+RUN_TESTS="${RUN_TESTS:-true}"
 
-./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+if [[ "$RUN_TESTS" == "true" ]]; then
+  ./mvnw --batch-mode --no-transfer-progress clean verify
+else
+  ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+fi
+
 docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
