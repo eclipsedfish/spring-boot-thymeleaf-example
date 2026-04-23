@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: spring-thymeleaf-app:staging
+    container_name: spring-thymeleaf-staging
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+    restart: unless-stopped
