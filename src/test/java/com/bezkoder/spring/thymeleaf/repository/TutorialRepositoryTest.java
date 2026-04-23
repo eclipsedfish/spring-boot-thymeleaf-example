@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import com.bezkoder.spring.thymeleaf.entity.Tutorial;
 
@@ -15,6 +16,9 @@ class TutorialRepositoryTest {
 
   @Autowired
   private TutorialRepository tutorialRepository;
+
+  @Autowired
+  private TestEntityManager entityManager;
 
   @Test
   void findByTitleContainingIgnoreCase_returnsMatchingTutorials() {
@@ -42,6 +46,10 @@ class TutorialRepositoryTest {
     Tutorial tutorial = tutorialRepository.save(new Tutorial("JUnit", "Testing", 2, false));
 
     tutorialRepository.updatePublishedStatus(tutorial.getId(), true);
+
+    // Clear persistence context so we read DB-updated state instead of cached entity
+    entityManager.flush();
+    entityManager.clear();
 
     Tutorial updated = tutorialRepository.findById(tutorial.getId()).orElseThrow(IllegalStateException::new);
     assertThat(updated.isPublished()).isTrue();
