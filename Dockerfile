@@ -1,16 +1,23 @@
-# syntax=docker/dockerfile:1
+FROM eclipse-temurin:8-jdk AS build
 
-FROM maven:3.9.9-eclipse-temurin-8 AS build
-WORKDIR /workspace
-COPY pom.xml ./
+WORKDIR /app
+
 COPY .mvn ./.mvn
 COPY mvnw ./
+COPY pom.xml ./
+
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 RUN ./mvnw --batch-mode --no-transfer-progress dependency:go-offline
+
 COPY src ./src
 RUN ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
 
 FROM eclipse-temurin:8-jre
+
 WORKDIR /app
-COPY --from=build /workspace/target/spring-boot-thymeleaf-example-0.0.1-SNAPSHOT.jar app.jar
+
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
