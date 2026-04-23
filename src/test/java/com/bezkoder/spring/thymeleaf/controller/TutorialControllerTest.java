@@ -1,6 +1,7 @@
 package com.bezkoder.spring.thymeleaf.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,4 +79,27 @@ class TutorialControllerTest {
 
     verify(tutorialRepository).save(any(Tutorial.class));
   }
+
+  @Test
+  void deleteTutorial_whenRepositoryFails_redirectsWithFlashMessage() throws Exception {
+    doThrow(new RuntimeException("delete failed")).when(tutorialRepository).deleteById(5);
+
+    mockMvc.perform(get("/tutorials/delete/5"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attributeExists("message"));
+
+    verify(tutorialRepository).deleteById(5);
+  }
+
+  @Test
+  void updateTutorialPublishedStatus_redirectsWithStatusMessage() throws Exception {
+    mockMvc.perform(get("/tutorials/7/published/true"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attribute("message", "The Tutorial id=7 has been published"));
+
+    verify(tutorialRepository).updatePublishedStatus(7, true);
+  }
+
 }

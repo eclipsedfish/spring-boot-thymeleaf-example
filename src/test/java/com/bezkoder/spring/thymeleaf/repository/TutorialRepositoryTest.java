@@ -27,6 +27,16 @@ class TutorialRepositoryTest {
     assertThat(results.get(0).getTitle()).isEqualTo("Spring Basics");
   }
 
+
+  @Test
+  void findByTitleContainingIgnoreCase_returnsEmptyWhenNoMatch() {
+    tutorialRepository.save(new Tutorial("Docker", "Containers", 1, true));
+
+    List<Tutorial> results = tutorialRepository.findByTitleContainingIgnoreCase("kubernetes");
+
+    assertThat(results).isEmpty();
+  }
+
   @Test
   void updatePublishedStatus_updatesPublishedFlag() {
     Tutorial tutorial = tutorialRepository.save(new Tutorial("JUnit", "Testing", 2, false));
