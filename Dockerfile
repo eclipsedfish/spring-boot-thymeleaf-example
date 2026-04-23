@@ -3,9 +3,11 @@
 FROM maven:3.9.9-eclipse-temurin-8 AS build
 WORKDIR /workspace
 COPY pom.xml ./
-RUN mvn --batch-mode --no-transfer-progress dependency:go-offline
+COPY .mvn ./.mvn
+COPY mvnw ./
+RUN ./mvnw --batch-mode --no-transfer-progress dependency:go-offline
 COPY src ./src
-RUN mvn --batch-mode --no-transfer-progress clean package -DskipTests
+RUN ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
 
 FROM eclipse-temurin:8-jre
 WORKDIR /app
