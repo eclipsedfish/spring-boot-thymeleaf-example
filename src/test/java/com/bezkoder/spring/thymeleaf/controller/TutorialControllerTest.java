@@ -9,11 +9,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,25 @@ class TutorialControllerTest {
   }
 
   @Test
+  void getAll_whenRepositoryFails_setsMessageOnModel() throws Exception {
+    when(tutorialRepository.findAll()).thenThrow(new RuntimeException("db error"));
+
+    mockMvc.perform(get("/tutorials"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("tutorials"))
+        .andExpect(model().attributeExists("message"));
+  }
+
+  @Test
+  void addTutorial_returnsFormWithPublishedDefaultTrue() throws Exception {
+    mockMvc.perform(get("/tutorials/new"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("tutorial_form"))
+        .andExpect(model().attributeExists("tutorial"))
+        .andExpect(model().attribute("pageTitle", "Create new Tutorial"));
+  }
+
+  @Test
   void saveTutorial_persistsAndRedirectsWithSuccessFlashMessage() throws Exception {
     when(tutorialRepository.save(any(Tutorial.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -81,6 +102,53 @@ class TutorialControllerTest {
   }
 
   @Test
+  void saveTutorial_whenRepositoryFails_redirectsWithMessageAttribute() throws Exception {
+    when(tutorialRepository.save(any(Tutorial.class))).thenThrow(new RuntimeException("save failed"));
+
+    mockMvc.perform(post("/tutorials/save")
+        .param("title", "Mockito")
+        .param("description", "Testing")
+        .param("level", "1")
+        .param("published", "true"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrlPattern("/tutorials?message=*"));
+  }
+
+  @Test
+  void editTutorial_withExistingId_returnsEditForm() throws Exception {
+    Tutorial tutorial = new Tutorial("JUnit", "Testing", 2, false);
+    tutorial.setId(100);
+
+    when(tutorialRepository.findById(100)).thenReturn(Optional.of(tutorial));
+
+    mockMvc.perform(get("/tutorials/100"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("tutorial_form"))
+        .andExpect(model().attributeExists("tutorial"))
+        .andExpect(model().attribute("pageTitle", "Edit Tutorial (ID: 100)"));
+  }
+
+  @Test
+  void editTutorial_withMissingId_redirectsAndSetsFlashMessage() throws Exception {
+    when(tutorialRepository.findById(999)).thenReturn(Optional.empty());
+
+    mockMvc.perform(get("/tutorials/999"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attributeExists("message"));
+  }
+
+  @Test
+  void deleteTutorial_success_redirectsWithSuccessMessage() throws Exception {
+    mockMvc.perform(get("/tutorials/delete/8"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attribute("message", "The Tutorial with id=8 has been deleted successfully!"));
+
+    verify(tutorialRepository).deleteById(8);
+  }
+
+  @Test
   void deleteTutorial_whenRepositoryFails_redirectsWithFlashMessage() throws Exception {
     doThrow(new RuntimeException("delete failed")).when(tutorialRepository).deleteById(5);
 
@@ -93,7 +161,7 @@ class TutorialControllerTest {
   }
 
   @Test
-  void updateTutorialPublishedStatus_redirectsWithStatusMessage() throws Exception {
+  void updateTutorialPublishedStatus_true_redirectsWithPublishedMessage() throws Exception {
     mockMvc.perform(get("/tutorials/7/published/true"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/tutorials"))
@@ -102,4 +170,23 @@ class TutorialControllerTest {
     verify(tutorialRepository).updatePublishedStatus(7, true);
   }
 
+  @Test
+  void updateTutorialPublishedStatus_false_redirectsWithDisabledMessage() throws Exception {
+    mockMvc.perform(get("/tutorials/7/published/false"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attribute("message", "The Tutorial id=7 has been disabled"));
+
+    verify(tutorialRepository).updatePublishedStatus(7, false);
+  }
+
+  @Test
+  void updateTutorialPublishedStatus_whenRepositoryFails_setsErrorFlashMessage() throws Exception {
+    doThrow(new RuntimeException("update failed")).when(tutorialRepository).updatePublishedStatus(11, true);
+
+    mockMvc.perform(get("/tutorials/11/published/true"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/tutorials"))
+        .andExpect(flash().attributeExists("message"));
+  }
 }
